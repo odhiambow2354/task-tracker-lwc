@@ -1,69 +1,200 @@
-# Welcome to your Lovable project
 
-## Project info
+# Salesforce Task Tracker LWC
 
-**URL**: https://lovable.dev/projects/a753dca5-c11f-4aae-a1aa-3c966b77879d
+A Lightning Web Component for managing tasks in Salesforce, featuring a clean, minimalist design inspired by modern productivity applications.
 
-## How can I edit this code?
+![Task Tracker LWC Preview](https://via.placeholder.com/800x450.png?text=Task+Tracker+LWC)
 
-There are several ways of editing your application.
+## Features
 
-**Use Lovable**
+- Display a list of Task__c records with visual indicators for overdue tasks
+- Mark tasks as completed with smooth animations and visual feedback
+- Automated processing of overdue tasks via Apex Batch/Queueable job
+- REST API endpoint for external access to task data
+- Clean, intuitive UI with responsive design and accessibility features
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/a753dca5-c11f-4aae-a1aa-3c966b77879d) and start prompting.
+## Deployment Instructions
 
-Changes made via Lovable will be committed automatically to this repo.
+### Custom Object Deployment
 
-**Use your preferred IDE**
+#### Option 1: Using Salesforce DX
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+1. Clone this repository to your local machine:
+   ```bash
+   git clone https://github.com/yourusername/task-tracker-lwc.git
+   cd task-tracker-lwc
+   ```
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+2. Authorize your Salesforce org:
+   ```bash
+   sfdx force:auth:web:login -a YourOrgAlias
+   ```
 
-Follow these steps:
+3. Deploy the Task__c custom object:
+   ```bash
+   sfdx force:source:deploy -p force-app/main/default/objects/Task__c
+   ```
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+#### Option 2: Manual Deployment via Setup
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+1. Navigate to Setup > Object Manager > Create > Custom Object
+2. Create a new custom object with the following properties:
+   - Label: Task
+   - Plural Label: Tasks
+   - API Name: Task__c
+   - Fields:
+     - Name (Text, Required)
+     - Due_Date__c (Date)
+     - Completed__c (Checkbox, default: false)
 
-# Step 3: Install the necessary dependencies.
-npm i
+### LWC Component Deployment
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+Deploy the taskList component and related Apex classes:
+
+```bash
+sfdx force:source:deploy -p force-app/main/default/lwc/taskList,force-app/main/default/classes
 ```
 
-**Edit a file directly in GitHub**
+## Accessing the LWC Component
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Option 1: Add to Lightning App Page
 
-**Use GitHub Codespaces**
+1. Navigate to Setup > Lightning App Builder
+2. Create a new app page or edit an existing one
+3. Drag the "Task List" custom component from the custom components section
+4. Save and activate the page
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### Option 2: Add to Lightning Tab
 
-## What technologies are used for this project?
+1. Navigate to Setup > Tabs
+2. Create a new Lightning Component tab
+3. Select the "taskList" component
+4. Give it a label (e.g., "Task Manager")
+5. Add the tab to your app via App Manager
 
-This project is built with .
+## Batch/Queueable Job Usage
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+The `TaskOverdueBatch` Apex class processes all tasks that are past their due date and marks them as completed.
 
-## How can I deploy this project?
+### Running Manually
 
-Simply open [Lovable](https://lovable.dev/projects/a753dca5-c11f-4aae-a1aa-3c966b77879d) and click on Share -> Publish.
+Execute the following in Developer Console:
 
-## I want to use a custom domain - is that possible?
+```apex
+Database.executeBatch(new TaskOverdueBatch(), 200);
+```
 
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+### Scheduling the Batch Job
+
+To schedule the batch job to run daily:
+
+```apex
+String cronExp = '0 0 0 * * ?'; // Run at midnight every day
+System.schedule('Daily Task Overdue Processing', cronExp, new TaskOverdueScheduler());
+```
+
+## REST API Endpoint Usage
+
+The TaskAPI class provides a REST endpoint for accessing task data. Here's how to use it:
+
+### Endpoint Information
+
+- **URL**: `/services/apexrest/v1/tasks`
+- **Method**: GET
+- **Authentication**: OAuth 2.0 required
+
+### Sample Request (Using cURL)
+
+```bash
+curl -X GET https://your-instance.my.salesforce.com/services/apexrest/v1/tasks \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Type: application/json"
+```
+
+### Sample Response
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "a0X1h000003XYZaABC",
+      "name": "Complete Project Documentation",
+      "dueDate": "2023-04-15",
+      "completed": false
+    },
+    {
+      "id": "a0X1h000003XYZbDEF",
+      "name": "Schedule Team Meeting",
+      "dueDate": "2023-04-10",
+      "completed": true
+    }
+  ]
+}
+```
+
+## Testing
+
+### Running Apex Tests
+
+```bash
+sfdx force:apex:test:run -n "TaskServiceTest,TaskAPITest,TaskOverdueBatchTest" -r human
+```
+
+### Test Coverage
+
+The included test classes provide 100% code coverage for all Apex classes.
+
+## Project Structure
+
+```
+force-app/
+├── main/
+│   ├── default/
+│   │   ├── objects/
+│   │   │   └── Task__c/
+│   │   │       ├── Task__c.object-meta.xml
+│   │   │       └── fields/
+│   │   │           ├── Due_Date__c.field-meta.xml
+│   │   │           └── Completed__c.field-meta.xml
+│   │   ├── lwc/
+│   │   │   └── taskList/
+│   │   │       ├── taskList.html
+│   │   │       ├── taskList.js
+│   │   │       ├── taskList.js-meta.xml
+│   │   │       └── taskList.css
+│   │   └── classes/
+│   │       ├── TaskService.cls
+│   │       ├── TaskService.cls-meta.xml
+│   │       ├── TaskServiceTest.cls
+│   │       ├── TaskServiceTest.cls-meta.xml
+│   │       ├── TaskAPI.cls
+│   │       ├── TaskAPI.cls-meta.xml
+│   │       ├── TaskAPITest.cls
+│   │       ├── TaskAPITest.cls-meta.xml
+│   │       ├── TaskOverdueBatch.cls
+│   │       ├── TaskOverdueBatch.cls-meta.xml
+│   │       ├── TaskOverdueScheduler.cls
+│   │       ├── TaskOverdueScheduler.cls-meta.xml
+│   │       ├── TaskOverdueBatchTest.cls
+│   │       └── TaskOverdueBatchTest.cls-meta.xml
+```
+
+## Limitations and Assumptions
+
+- The LWC assumes that users have appropriate permissions to view and modify Task__c records
+- Due to the asynchronous nature of Batch jobs, there may be a slight delay in processing overdue tasks
+- The REST API endpoint returns a maximum of 2000 records per request
+- The component currently does not support filtering or sorting beyond the default due date ordering
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Author
+
+[Your Name](mailto:your.email@example.com)
