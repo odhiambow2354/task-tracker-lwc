@@ -21,7 +21,7 @@ A Lightning Web Component for managing tasks in Salesforce, featuring a clean, m
 
 1. Clone this repository to your local machine:
    ```bash
-   git clone https://github.com/yourusername/task-tracker-lwc.git
+   git clone git@github.com:odhiambow2354/task-tracker-lwc.git
    cd task-tracker-lwc
    ```
 
@@ -197,4 +197,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Author
 
-[Your Name](mailto:your.email@example.com)
+[Omondi Wycliffe](mailto:iamwycliffedev.com)
