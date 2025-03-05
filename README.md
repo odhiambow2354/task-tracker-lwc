@@ -3,8 +3,7 @@
 
 A Lightning Web Component for managing tasks in Salesforce, featuring a clean, minimalist design inspired by modern productivity applications.
 
-![Task Tracker LWC Link](https://task-tracker-lwc.vercel.app/)
-## URL: https://task-tracker-lwc.vercel.app/
+## Project URL: https://task-tracker-lwc.vercel.app/
 ## Features
 
 - Display a list of Task__c records with visual indicators for overdue tasks
